@@ -1,14 +1,11 @@
-"""smartbox/telemetry.py: PÅ som standard - bevisar att det skickas utan att
-något måste sättas i .env, att den inte går att stänga av (obligatorisk sedan 2026-11-06), att
-rätt (och bara rätt) fält skickas, och att ett sändningsfel aldrig kraschar.
-Mockar requests helt - rör aldrig nätverket."""
+"""Privacy policy plus upstream payload tests with explicitly mocked senders."""
 import importlib
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 
-def _reload(monkeypatch, opt_in=None, endpoint=None):
+def _reload(monkeypatch, opt_in=None, endpoint=None, *, enable_for_test=True):
     """opt_in/endpoint=None -> miljövariabeln är helt osatt (testar det faktiska
     standardläget, inte en tom sträng som betyder något annat i koden)."""
     if opt_in is None:
@@ -20,39 +17,37 @@ def _reload(monkeypatch, opt_in=None, endpoint=None):
     else:
         monkeypatch.setenv("TELEMETRY_ENDPOINT", endpoint)
     import telemetry
-    return importlib.reload(telemetry)
+    telemetry = importlib.reload(telemetry)
+    if enable_for_test:
+        # Exercise upstream payload/redaction logic only with mocked HTTP below.
+        monkeypatch.setattr(telemetry, "OPT_IN", True)
+        monkeypatch.setattr(telemetry, "ENDPOINT", "https://energywizzard.profitalgos.com/telemetry")
+        import support_bundle
+        monkeypatch.setattr(support_bundle, "enabled", lambda: False)
+    return telemetry
 
 
-def test_pa_som_standard_utan_nagon_env_variabel(monkeypatch):
-    t = _reload(monkeypatch)
-    assert t.OPT_IN is True
-    assert t.ENDPOINT == "https://energywizzard.profitalgos.com/telemetry"
-    with patch("telemetry.requests.post") as mock_post:
+@pytest.mark.parametrize("opt_in", [None, "", "false", "true"])
+def test_private_build_never_sends_or_installs_error_hook(monkeypatch, tmp_path, opt_in):
+    import builtins
+    import ew_settings
+    t = _reload(monkeypatch, opt_in=opt_in, endpoint="https://example.invalid", enable_for_test=False)
+    monkeypatch.setattr(ew_settings, "PATH", str(tmp_path / "settings.json"))
+    ew_settings._cache.update(mtime=None, data={})
+    original_print = builtins.print
+    with patch("telemetry.requests.post") as mock_post, \
+         patch("threading.Thread") as thread, \
+         patch("support_bundle.build") as bundle:
+        t.note_state(indoor=21, outdoor=4, indoor_source="ha_sensors")
         t.send_driver_snapshot({"house_id": "mitt-hus"})
-    mock_post.assert_called_once()
-
-
-def test_obligatorisk_gar_inte_att_stanga_av(monkeypatch):
-    """Emils beslut 2026-11-06: telemetrin är ett villkor för att använda EnergyWizard. Varken TELEMETRY_OPT_IN=false
-    eller en egen TELEMETRY_ENDPOINT stänger av eller leder om den."""
-    t = _reload(monkeypatch, opt_in="false", endpoint="https://annan.example.com")
-    assert t.OPT_IN is True and t.ENDPOINT == "https://energywizzard.profitalgos.com/telemetry"
-    assert not hasattr(t, "send_ping")
-    with patch("telemetry.requests.post") as mock_post:
-        t.send_driver_snapshot({"house_id": "mitt-hus"})
-        t.report_error({"house_id": "mitt-hus"}, "main_loop", "ValueError")
-    assert mock_post.call_count == 2
-    assert all(c.args[0].startswith("https://energywizzard.profitalgos.com/telemetry") for c in mock_post.call_args_list)
-
-
-def test_tom_endpoint_betyder_standardadressen(monkeypatch):
-    """docker-compose skickar TELEMETRY_ENDPOINT= (tom) när .env saknar raden - då ska standarden gälla,
-    annars tystnar alla compose-installationer (så var det fram till 2026-11-03). Av = TELEMETRY_OPT_IN=false."""
-    t = _reload(monkeypatch, opt_in="", endpoint="")
-    assert t.OPT_IN is True and t.ENDPOINT == "https://energywizzard.profitalgos.com/telemetry"
-    with patch("telemetry.requests.post") as mock_post:
-        t.send_driver_snapshot({"house_id": "mitt-hus"})
-    mock_post.assert_called_once()
+        t.maybe_send_daily({})
+        t.report_error({}, "main_loop", "ValueError")
+        t.install_error_hook({})
+    mock_post.assert_not_called()
+    thread.assert_not_called()
+    bundle.assert_not_called()
+    assert builtins.print is original_print
+    assert not (tmp_path / "settings.json").exists()
 
 
 def _equipment(items):

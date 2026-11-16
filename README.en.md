@@ -1,5 +1,22 @@
 # EnergyWizard Open
 
+> **Privacy fork:** this is a modified version of EnergyWizard by murre87, based on
+> upstream commit `745a65d4305b94aa6c84ddcf590eb98dac9db6f8` (16 November 2026).
+> Telemetry and automatic support uploads are disabled in code, including in shadow
+> mode, regardless of old telemetry environment variables or saved support settings.
+> The upstream telemetry statements below describe upstream builds, not this fork.
+>
+> **Home Assistant installation:** add `https://github.com/rikbootsman/energywizard`
+> as an app/add-on repository and install **EnergyWizard Private**. It builds from
+> this fork's fixed `privacy-1` tag rather than downloading upstream's container.
+> Shadow mode is forced on by default through the add-on's `shadow_mode` option.
+> Leave it enabled while checking plans; existing device controllers stay in charge.
+> Do not install an upstream image or enable automatic upstream image replacement.
+>
+> This is not an offline build: configured weather, tariff, device-cloud and update
+> services can still be contacted. Local learning/history remain local. Review
+> changes and rerun the privacy tests before publishing a new version/tag.
+
 **🇸🇪 [Svenska](README.md) · 🇬🇧 English**
 
 [![Sponsor on GitHub](https://img.shields.io/badge/Sponsor-%E2%9D%A4-db61a2?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/murre87)

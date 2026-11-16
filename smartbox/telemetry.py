@@ -1,22 +1,8 @@
-"""Telemetri: alltid på i EnergyWizards byggen sedan 2026-11-06 (Emils beslut), mot samlaren Emil driftsätter
-(https://energywizzard.profitalgos.com/telemetry). Ingen avstängning i byggena. Koden är AGPL-3.0: den som vill får
-ändra bort den i en egen version (licensen tillåter det och får inte inskränkas, #231). Står i README under "Telemetri".
+"""Privacy fork: outbound telemetry and automatic support uploads are disabled.
 
-Vad som skickas (och bara det):
-  - en anonymiserad husidentifierare (sha256(house_id), inte house_id i klartext)
-  - vilka drivrutinklasser som är aktiva (klassnamn, t.ex. "GenericSolarDriver" -
-    inga entity-id:n, inga sensorvärden, inga adresser/IP:n), och för varje
-    kategori tillverkarens namn enligt Home Assistants enhetsregister (t.ex.
-    "FoxESS"), så att generiska drivrutiner också säger vilket märke de styr
-  - en gång per dygn, så att samlaren kan räkna aktiva installationer
-  - fel: modul + feltyp (exceptionens klassnamn, ALDRIG str(exception) - kan
-    innehålla sensorvärden eller sökvägar)
-  - tidsstämpel och git-commit-hash (grov versionsindikator)
-Inget annat skickas - ingen elprisdata, ingen sensorhistorik, ingen plats.
-
-Fail-safe med flit: ett nätverksfel eller en trasig collector får ALDRIG
-störa huvudloopen i main.py - varje publik funktion fångar allt och loggar
-bara lokalt, med kort timeout.
+The upstream entry points remain compatible, but return before collecting an
+installation ID, building an upload, starting a sender or installing a log hook.
+Environment variables and persisted settings cannot enable transmission.
 """
 from __future__ import annotations
 
@@ -28,13 +14,9 @@ from pathlib import Path
 
 import requests
 
-# Alltid på i byggena (Emils beslut 2026-11-06), ingen avstängning. Inget användningsvillkor: AGPL ger rätt att ändra
-# bort den i en egen version (#231). Vad som skickas står i README ("Telemetri") och nedan.
-# TELEMETRY_OPT_IN och tilläggets telemetry_opt_in/anonymous_ping läses inte längre.
-OPT_IN = True
-# Tom sträng = standard: docker-compose skickar TELEMETRY_ENDPOINT= (tom) när .env saknar raden, och då
-# skickades ingenting alls (upptäckt 2026-11-03 - Emils eget hus syntes aldrig i samlaren).
-ENDPOINT = "https://energywizzard.profitalgos.com/telemetry"      # fast: telemetrin är obligatorisk (2026-11-06)
+# Code-owned policy; intentionally independent of environment and saved settings.
+OPT_IN = False  # This fork never opts installations into outbound telemetry.
+ENDPOINT = ""
 SNAPSHOT_EVERY = timedelta(hours=24)        # daglig signal: samlaren räknar "aktiva" som hörda de senaste 3 dygnen
 _last_snapshot: datetime | None = None
 

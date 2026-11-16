@@ -1,9 +1,8 @@
-name: "EnergyWizard"
-version: "1.2.116"
-image: "ghcr.io/murre87/energywizard"
-slug: "smartbox"
-description: "Minut-för-minut styrning av elbil, värmepump, solcellsexport, spabad och huvudsäkring efter spotpriset - helt via Home Assistants egna entiteter."
-url: "https://github.com/murre87/energywizard"
+name: "EnergyWizard Private"
+version: "0.1.0"
+slug: "energywizard_private"
+description: "Energy management without telemetry or support uploads. Starts in shadow mode."
+url: "https://github.com/rikbootsman/energywizard"
 arch:
   - amd64
   - aarch64
@@ -29,17 +28,12 @@ ingress: true
 ingress_port: 8503
 panel_icon: mdi:lightning-bolt
 panel_title: EnergyWizard
-# Telemetrin är obligatorisk sedan 1.2.45. De gamla telemetrivalen finns kvar som valfria i schemat bara så att
-# befintliga installationer (som har dem sparade) inte stoppas av Supervisors validering - de läses inte.
-options: {}
+# Telemetry and support uploads are disabled in code, not configurable.
+options:
+  shadow_mode: true
 schema:
   dashboard_password: "password?"
-  telemetry_opt_in: "bool?"
-  anonymous_ping: "bool?"
-  telemetry_endpoint: "str?"
-  # Flottvy (#265): valfritt. På din egen installation — se anonyma Installationer från samlaren.
-  telemetry_stats_url: "str?"
-  telemetry_stats_token: "password?"
+  shadow_mode: bool
   nibe_local_username: "str?"
   nibe_local_password: "password?"
   nibe_local_tls_pin_sha256: "str?"

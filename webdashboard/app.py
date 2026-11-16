@@ -894,6 +894,9 @@ async def support_diag_set(request: Request):
         return JSONResponse({"error": "Bara ägaren kan ändra felsökningsutdrag"}, status_code=403)
     import support_bundle
     body = await request.json()
+    import telemetry
+    if body.get("enabled") and not telemetry.OPT_IN:
+        return JSONResponse({"error": "Support uploads are disabled in this privacy build."}, status_code=409)
     support_bundle.set_enabled(bool(body.get("enabled")))
     return {"ok": True, "enabled": support_bundle.enabled(), "message": "Sparat"}
 

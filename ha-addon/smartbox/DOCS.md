@@ -1,5 +1,13 @@
 # EnergyWizard (Supervisor-tillägg)
 
+> **Privacy fork (16 November 2026):** this add-on is **EnergyWizard Private**.
+> It builds from `rikbootsman/energywizard`, tag `privacy-1`, with telemetry and
+> automatic support uploads disabled in code. The upstream telemetry and image
+> distribution notes below do not describe this modified build.
+> The add-on option `shadow_mode` defaults to `true` and forces device control off.
+> Turning it off requires an explicit add-on configuration change and restart;
+> the dashboard can still keep shadow mode enabled independently.
+
 Kör EnergyWizards huvudmotor (`smartbox`) direkt i Home Assistant OS/Supervisor
 - ingen docker-compose, ingen extern databas att sätta upp själv.
 

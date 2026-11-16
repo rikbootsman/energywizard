@@ -11,7 +11,7 @@ ARG PIP_DISABLE_PIP_VERSION_CHECK=1
 # behöva hållas manuellt synkad, en garanterad källa till drift mellan de två
 # kopiorna). Avsteg, dokumenterat i DOCS.md: kräver internetåtkomst vid bygge
 # (precis som pip/apt redan gör), och är pinnad mot en specifik gren/tagg.
-ARG ENERGYWIZARD_REF=main
+ARG ENERGYWIZARD_REF=privacy-1
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
         postgresql postgresql-contrib git \
     && rm -rf /var/lib/apt/lists/*
@@ -23,13 +23,12 @@ ARG ENERGYWIZARD_COMMIT=
 ENV APP_VERSION=${ENERGYWIZARD_COMMIT}
 # Repot att klona: standard är projektet självt; CI sätter forkens adress för pull requests från forkar
 # (grenen finns bara där, annars misslyckas kloningen).
-ARG ENERGYWIZARD_REPO=https://github.com/murre87/energywizard
+ARG ENERGYWIZARD_REPO=https://github.com/rikbootsman/energywizard
 # Byggcachen får ALDRIG återanvända en gammal klon (2026-11-04, #125: tilläggsanvändare fick gammal kod trots ny
 # version, eftersom kloningssteget såg likadant ut varje gång när HA bygger själv). Två skydd:
 #  - BUILD_VERSION sätts av Home Assistant (tilläggets version) - ny version = ny klon.
 #  - ADD av grenens senaste commit från GitHub: Docker jämför innehållet, så en ändrad main ger alltid en ny klon.
 ARG BUILD_VERSION=
-ADD https://github.com/murre87/energywizard/commits/main.atom /tmp/energywizard-main.json
 # Med ENERGYWIZARD_COMMIT (CI) checkas exakt den commiten ut, så att den färdiga bilden för en version innehåller den
 # kod versionen byggdes från även om main hunnit flytta sig under bygget.
 RUN echo "EnergyWizard ${ENERGYWIZARD_REPO} ${ENERGYWIZARD_REF} ${ENERGYWIZARD_COMMIT} ${BUILD_VERSION}" && git clone --depth 1 --branch "${ENERGYWIZARD_REF}" \

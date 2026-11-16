@@ -1,4 +1,4 @@
-"""#227: sanerat supportutdrag, på som standard."""
+"""Support redaction and the privacy fork's disabled upload policy."""
 import sys
 from pathlib import Path
 from unittest import mock
@@ -15,14 +15,15 @@ def test_sanitize_strips_entities_and_ips():
     assert "sensor.<…>" in t and "<ip>" in t
 
 
-def test_enabled_defaults_on_when_unset():
+def test_private_build_disables_support_even_with_saved_opt_in():
     import ew_settings
-    with mock.patch.object(ew_settings, "get", return_value=None):
-        assert support_bundle.enabled() is True
-    with mock.patch.object(ew_settings, "get", return_value=False):
+    import telemetry
+    with mock.patch.object(telemetry, "OPT_IN", False), \
+         mock.patch.object(ew_settings, "get", return_value=True), \
+         mock.patch.object(support_bundle, "_journal_lines") as journal:
         assert support_bundle.enabled() is False
-    with mock.patch.object(ew_settings, "get", return_value="off"):
-        assert support_bundle.enabled() is False
+        assert support_bundle.build("main", "Error") == ""
+    journal.assert_not_called()
 
 
 def test_build_empty_when_disabled():

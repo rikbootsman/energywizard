@@ -23,6 +23,9 @@ _TOKENISH = re.compile(r"\b(?:eyJ|ghp_|github_pat_|sk-)[A-Za-z0-9_\-\.]{12,}\b")
 
 def enabled() -> bool:
     """På för alla befintliga installationer tills någon uttryckligen stänger av."""
+    import telemetry
+    if not telemetry.OPT_IN:
+        return False
     try:
         import ew_settings
         v = ew_settings.get(_SETTING)

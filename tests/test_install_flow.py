@@ -88,6 +88,18 @@ def _cookie(wd, role="owner"):
     return {wd.AUTH.cookie: wd.AUTH.sign(int(time.time()) + 3600, role, role)}
 
 
+def test_private_build_rejects_enabling_support_uploads(wd, monkeypatch):
+    import telemetry
+    monkeypatch.setattr(telemetry, "OPT_IN", False)
+    with pytest.MonkeyPatch.context() as settings_patch:
+        import support_bundle
+        writes = []
+        settings_patch.setattr(support_bundle, "set_enabled", lambda value: writes.append(value))
+        response = asyncio.run(wd.support_diag_set(_FakeRequest({"enabled": True}, _cookie(wd))))
+    assert response.status_code == 409
+    assert writes == []
+
+
 SEL = {"cars": [], "heat_pump": None, "solar": None, "spa": None, "battery": None}
 
 
